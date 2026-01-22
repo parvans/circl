@@ -2,8 +2,14 @@ import Link from 'next/link'
 import React from 'react'
 import DesktopNav from './DesktopNav'
 import MobileNav from './MobileNav'
+import { currentUser } from '@clerk/nextjs/server'
+import { syncUser } from '@/actions/user.action'
 
-export default function Navbar() {
+export default async function Navbar() {
+    const user = await currentUser();
+    if(user){
+        await syncUser(); 
+    }
   return (
     <nav className='sticky top-0 w-full border-b bg-background/95 backdrop-blur 
     supports-backdrop-filter:bg-background/60 z-50'>
