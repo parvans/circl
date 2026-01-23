@@ -62,3 +62,81 @@ export const getDbUserId =async()=>{
     if(!user) throw new Error("User not found");
     return user.id
 }
+
+export const getRandomUsers = async()=>{
+    try {
+        const userId = await getDbUserId();
+        const randomUsers = await prisma.user.findMany({
+            where:{
+                AND:[
+                    {NOT:{id:userId}}, // Exclude current user
+                    {NOT:{followers:{some:{followerId:userId}}}} // Exclude users already followed
+                ]
+            },
+            select:{
+                id:true,
+                name:true,
+                username:true,
+                image:true,
+                _count:{
+                    select:{
+                        followers:true,
+                    }
+                }
+            },
+            take:3,
+        });
+        return randomUsers;
+    } catch (error) {
+        console.log("Error in getRandomUsers", error);
+        return [];
+    }
+}
+
+export const toggleFollow = async(targetUserId:string)=>{
+    try {
+        const userId = await getDbUserId();
+        if(userId === targetUserId) throw new Error("Cannot follow yourself");
+
+        const existingFollow = await prisma.follows.findUnique({
+            where:{
+                followerId_followingId:{
+                    followerId:userId,
+                    followingId:targetUserId
+                }
+            }
+        });
+
+        if(existingFollow){
+            await prisma.follows.delete({
+                where:{
+                    followerId_followingId:{
+                        followerId:userId,
+                        followingId:targetUserId
+                    }
+                }
+            });
+        }else{
+            await prisma.$transaction([
+                prisma.follows.create({
+                    data:{
+                        followerId:userId,
+                        followingId:targetUserId
+                    }
+                }),
+                prisma.notifications.create({
+                    data:{
+                        type:"FOLLOW",
+                        userId:targetUserId,
+                        creatorId:userId
+                    }
+                })
+            ]);
+        }
+
+        return {success:true };
+    } catch (error) {
+        console.log("Error in toggleFollow", error);
+        return {success:false, error:"Failed to toggle follow"};
+    }
+}
