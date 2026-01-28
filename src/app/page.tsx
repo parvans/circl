@@ -12,14 +12,7 @@ export default async function Home() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
       <div className="lg:col-span-6">
-        {user ? <CreatePost/> : (
-          <div className="p-4 bg-secondary rounded-md text-center">
-            <h2 className="text-lg font-medium mb-2">Welcome to Circl</h2>
-            <p className="text-sm text-muted-foreground">
-              Please sign in to create posts and interact with the community.
-            </p>
-          </div>
-        )}
+        {user && <CreatePost/> }
         <div className="space-y-6">
           {posts.map((post)=>(
             <PostCard key={post.id} post={post} dbUserId={dbUserId}/>

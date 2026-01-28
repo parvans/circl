@@ -1,11 +1,15 @@
 "use client";
 import React, { useState } from 'react'
 import { Card, CardContent } from './ui/card'
-import { useUser } from '@clerk/nextjs';
+import { SignInButton, useUser } from '@clerk/nextjs';
 import { createComment, deletePost, getPosts, toggleLike } from '@/actions/post.action';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar, AvatarImage } from './ui/avatar';
+import { formatDistanceToNow } from 'date-fns';
+import DeleteAlertDialog from './DeleteAlertDialog';
+import { Button } from './ui/button';
+import { HeartIcon, MessageCircleIcon } from 'lucide-react';
 
 type Posts = Awaited<ReturnType<typeof getPosts>>;
 type Post = Posts[number];
@@ -18,18 +22,21 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
     const [isDeleting, setIsDeleting] = useState(false);
     const [hasLiked, setHasLiked] = useState(post.likes.some((like)=>like.userId === dbUserId));
     const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes);
+    const [showComments, setShowComments] = useState(false);
 
     const handleLikes = async()=>{
         if(isLiking) return;
         try {
             setIsLiking(true);
-            setHasLiked(prev=>!prev);
-            setOptimisticLikes(prev=>prev + (hasLiked ? -1 : 1));
+            setHasLiked((prev) => !prev);
+            setOptimisticLikes((prev) => prev + (hasLiked ? -1 : 1));
             await toggleLike(post.id);
         } catch (error) {
             setOptimisticLikes(post._count.likes);
             setHasLiked(post.likes.some((like)=>like.userId === dbUserId));
             console.log("Error liking post", error);
+        }finally{
+            setHasLiked(false)
         }
     }
 
@@ -48,8 +55,9 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
             setIsCommenting(false);
         }
     }
+
     const handleDeletePost = async()=>{
-        if(!isDeleting) return;
+        if(isDeleting) return;
         try {
             setIsDeleting(true);
             const result = await deletePost(post.id);
@@ -64,9 +72,10 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
             setIsDeleting(false)
         }
     }
+
   return (
     <Card className='overflow-hidden'>
-        <CardContent className='p-4 sm:p-6'>
+        <CardContent className='p-4 sm:p-3'>
             <div className='space-y-4'>
                 <div className='flex space-x-3 sm:space-x-4'>
                     <Link href={`/profile/${post.author.username}`}>
@@ -74,12 +83,8 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                             <AvatarImage src={post.author.image || "/avatar.png"}/>
                         </Avatar>
                     </Link>
-                    <div 
-                    // className='flex-1 min-w-0'
-                    >
-                        <div 
-                            // className='flex items-start justify-between'
-                        >
+                    <div className='flex-1 min-w-0'>
+                        <div className='flex items-start justify-between'>
                             {/* header */}
                             <div className='flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate'>
                                 <Link 
@@ -90,19 +95,69 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                                 </Link>
                                 <div className='flex items-center space-x-2 text-sm text-accent-foreground'>
                                     <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
-                                    <span>*</span>
-                                    <span>12/03/2026</span>
+                                    <span>-</span>
+                                    <span>{formatDistanceToNow(post.createdAt)}</span>
                                 </div>
                             </div>
 
-                            
-
+                            {/* check the current user is the post author */}
+                            {dbUserId === post.author.id && (
+                                <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                            )}
                         </div>
+                        <p className='mt-2 text-sm text-foreground wrap-break-word'>{post.content}</p>
                     </div>
+                </div>
+                {/* image */}
+                {post.image && ( 
+                    <div className='rounded-lg overflow-hidden'>
+                        <img src={post.image} alt='post-image' className='w-auto h-auto object-cover' />
+                    </div>
+                )} 
+
+                {/* like and comment */}
+                <div className="flex items-center pt-2 space-x-4">
+                    {
+                        user ? (
+
+                            <Button 
+                            variant={"ghost"}
+                            size={'sm'}
+                            className={
+                                `text-muted-foreground gap-2 ${
+                                    hasLiked && " text-red-500 hover:text-red-600"
+                                }`
+                            }
+                            onClick={handleLikes}
+                            >
+                                {hasLiked ? (<HeartIcon className='size-5 fill-current'/>):(
+                                    <HeartIcon className='size-5'/>
+                                )
+                                }
+                                <span>{optimisticLikes}</span>
+                            </Button>
+                        ):(
+                            <SignInButton mode='modal'>
+                                <Button variant={"ghost"} size={"sm"} className='text-muted-foreground gap-2'>
+                                    <HeartIcon className='size-5'/>
+                                    <span>{optimisticLikes}</span>
+                                </Button>
+                            </SignInButton>
+                        )}
+                        <Button 
+                         variant={"ghost"}
+                         size={"sm"}
+                         className='text-muted-foreground gap-2 hover:text-blue-500'
+                         onClick={()=>setShowComments((prev)=>!prev)}
+                         >
+                            <MessageCircleIcon
+                            className={`size-5 ${showComments ? "fill-blue-500 text-blue-500":""}`}
+                            />
+                            <span>{post.comments.length}</span>
+                        </Button>
                 </div>
             </div>
         </CardContent>
-        {post.content}
     </Card>
   )
 }

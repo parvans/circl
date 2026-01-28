@@ -34,6 +34,7 @@ export const getPosts = async()=>{
             include:{
                 author:{
                     select:{
+                        id:true,
                         name:true,
                         username:true,
                         image:true
