@@ -96,6 +96,57 @@ export const getRandomUsers = async()=>{
     }
 }
 
+export const searchUsers = async (rawQuery: string) => {
+    try {
+        const query = rawQuery.trim();
+        if (query.length < 2) return [];
+
+        return prisma.user.findMany({
+            where: {
+                OR: [
+                    {
+                        username: {
+                            contains: query,
+                            mode: "insensitive",
+                        },
+                    },
+                    {
+                        name: {
+                            contains: query,
+                            mode: "insensitive",
+                        },
+                    },
+                    {
+                        email: {
+                            contains: query,
+                            mode: "insensitive",
+                        },
+                    },
+                ],
+            },
+            select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+                _count: {
+                    select: {
+                        followers: true,
+                        posts: true,
+                    },
+                },
+            },
+            take: 5,
+            orderBy: {
+                username: "asc",
+            },
+        });
+    } catch (error) {
+        console.log("Error in searchUsers", error);
+        return [];
+    }
+}
+
 export const toggleFollow = async(targetUserId:string)=>{
     try {
         const userId = await getDbUserId();

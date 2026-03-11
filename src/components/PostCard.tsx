@@ -26,17 +26,18 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
 
     const handleLikes = async()=>{
         if(isLiking) return;
+        const nextLikedState = !hasLiked;
         try {
             setIsLiking(true);
-            setHasLiked((prev) => !prev);
-            setOptimisticLikes((prev) => prev + (hasLiked ? -1 : 1));
+            setHasLiked(nextLikedState);
+            setOptimisticLikes((prev) => prev + (nextLikedState ? 1 : -1));
             await toggleLike(post.id);
         } catch (error) {
             setOptimisticLikes(post._count.likes);
             setHasLiked(post.likes.some((like)=>like.userId === dbUserId));
             console.log("Error liking post", error);
         }finally{
-            setHasLiked(false)
+            setIsLiking(false);
         }
     }
 

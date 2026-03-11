@@ -37,6 +37,10 @@ model User {
   notifications        Notifications[] @relation("userNotifications") // notifications received by the user 
   notificationsCreated Notifications[] @relation("notificationCreator") // notifications created by the user
 
+  @@index([username])
+  @@index([name])
+  @@index([email])
+
 }
 
 model Posts {
@@ -54,6 +58,8 @@ model Posts {
   comments      Comments[]
   likes         Likes[]
   notifications Notifications[]
+
+  @@index([createdAt])
 
 }
 

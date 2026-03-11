@@ -76,6 +76,87 @@ export const getPosts = async()=>{
     }
 }
 
+export const searchPosts = async (rawQuery: string) => {
+    try {
+        const query = rawQuery.trim();
+        if (query.length < 2) return [];
+
+        return prisma.posts.findMany({
+            where: {
+                OR: [
+                    {
+                        content: {
+                            contains: query,
+                            mode: "insensitive",
+                        },
+                    },
+                    {
+                        author: {
+                            OR: [
+                                {
+                                    username: {
+                                        contains: query,
+                                        mode: "insensitive",
+                                    },
+                                },
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive",
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        image: true,
+                    },
+                },
+                comments: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                username: true,
+                                image: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                },
+                likes: {
+                    select: {
+                        userId: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        comments: true,
+                        likes: true,
+                    },
+                },
+            },
+            take: 5,
+        });
+    } catch (error) {
+        console.log("Error in searchPosts", error);
+        return [];
+    }
+}
+
 export const toggleLike = async(postId:string)=>{
     try {
         const userId = await getDbUserId();
