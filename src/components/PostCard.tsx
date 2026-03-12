@@ -9,13 +9,14 @@ import { Avatar, AvatarImage } from './ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import DeleteAlertDialog from './DeleteAlertDialog';
 import { Button } from './ui/button';
-import { HeartIcon, MessageCircleIcon } from 'lucide-react';
+import { HeartIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
+import { Textarea } from './ui/textarea';
 
 type Posts = Awaited<ReturnType<typeof getPosts>>;
 type Post = Posts[number];
 
 export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string | null}) {
-    const user = useUser();
+    const {user} = useUser();
     const [newComment, setNewComment] = useState("");
     const [isCommenting, setIsCommenting] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
@@ -96,7 +97,7 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                                 </Link>
                                 <div className='flex items-center space-x-2 text-sm text-accent-foreground'>
                                     <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
-                                    <span>-</span>
+                                    <span>·</span>
                                     <span>{formatDistanceToNow(post.createdAt)}</span>
                                 </div>
                             </div>
@@ -109,7 +110,7 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                         <p className='mt-2 text-sm text-foreground wrap-break-word'>{post.content}</p>
                     </div>
                 </div>
-                {/* image */}
+                {/* post image */}
                 {post.image && ( 
                     <div className='rounded-lg overflow-hidden'>
                         <img src={post.image} alt='post-image' className='w-auto h-auto object-cover' />
@@ -120,7 +121,6 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                 <div className="flex items-center pt-2 space-x-4">
                     {
                         user ? (
-
                             <Button 
                             variant={"ghost"}
                             size={'sm'}
@@ -145,6 +145,7 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                                 </Button>
                             </SignInButton>
                         )}
+
                         <Button 
                          variant={"ghost"}
                          size={"sm"}
@@ -157,6 +158,74 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
                             <span>{post.comments.length}</span>
                         </Button>
                 </div>
+                {showComments &&(
+                    <div className="space-y-4 pt-5 border-t">
+                        <div className="space-y-4">
+                            {/* display comment */}
+                            {
+                                post.comments.map((comment)=>(
+                                    <div key={comment.id} className='flex space-x-3'>
+                                        <Avatar>
+                                            <AvatarImage src={comment.author.image ?? "/avatar.png"}/>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                <span className="font-medium text-sm">{comment.author.name}</span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    @{comment.author.username}
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    ·
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {formatDistanceToNow(new Date(comment.createdAt))} ago
+                                                </span>
+                                            </div>
+                                            <p className='text-sm wrap-break-word'>{comment.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                        {
+                            user ?(
+                                <div className="flex space-x-3">
+                                    <Avatar className='size-8 shrink-0'>
+                                        <AvatarImage src={user?.imageUrl || "/avatar.png"}/>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <Textarea
+                                        placeholder='Write a comment...'
+                                        value={newComment}
+                                        onChange={(e)=>setNewComment(e.target.value)}
+                                        className='min-h-20 resize-none'
+                                        />
+                                        <div className="flex justify-end mt-2">
+                                            <Button
+                                            size="sm"
+                                            onClick={handleAddComment}
+                                            className='flex items-center gap-2'
+                                            disabled={!newComment.trim() || isCommenting}
+                                            >
+                                            {
+                                                isCommenting ? (
+                                                    "Posting..."
+                                                ):(
+                                                    <>
+                                                    <SendIcon className='size-4'/>
+                                                    Comment
+                                                    </>
+                                                )
+                                            }
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ):(
+                                <div>dssd</div>
+                            )
+                        }
+                    </div>
+                )}
             </div>
         </CardContent>
     </Card>
