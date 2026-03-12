@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex min-h-[78vh] max-w-4xl flex-col items-center justify-center px-6 py-12 text-center">
+    <div className="mx-auto flex min-h-[78vh] max-w-2xs flex-col items-center justify-center px-6 py-12 text-center">
       <img
         src="/not-found-minimal.svg"
         alt="Page not found illustration"
