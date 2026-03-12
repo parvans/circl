@@ -1,33 +1,35 @@
 "use client";
-import React, { useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { SignInButton, useUser } from '@clerk/nextjs';
-import { createComment, deletePost, getPosts, toggleLike } from '@/actions/post.action';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import { Avatar, AvatarImage } from './ui/avatar';
-import { formatDistanceToNow } from 'date-fns';
-import DeleteAlertDialog from './DeleteAlertDialog';
-import { Button } from './ui/button';
-import { HeartIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
-import { Textarea } from './ui/textarea';
+
+import React, { useState } from "react";
+import { Card, CardContent } from "./ui/card";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { deletePost, getPosts, toggleLike } from "@/actions/post.action";
+import { toast } from "sonner";
+import Link from "next/link";
+import { Avatar, AvatarImage } from "./ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import DeleteAlertDialog from "./DeleteAlertDialog";
+import { Button } from "./ui/button";
+import { HeartIcon, MessageCircleIcon } from "lucide-react";
+import CommentSection from "./CommentSection";
 
 type Posts = Awaited<ReturnType<typeof getPosts>>;
 type Post = Posts[number];
 
-export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string | null}) {
-    const {user} = useUser();
-    const [newComment, setNewComment] = useState("");
-    const [isCommenting, setIsCommenting] = useState(false);
+export default function PostCard({ post, dbUserId }: { post: Post; dbUserId?: string | null }) {
+    const { user } = useUser();
     const [isLiking, setIsLiking] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [hasLiked, setHasLiked] = useState(post.likes.some((like)=>like.userId === dbUserId));
+    const [hasLiked, setHasLiked] = useState(post.likes.some((like) => like.userId === dbUserId));
     const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes);
     const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState(post.comments);
 
-    const handleLikes = async()=>{
-        if(isLiking) return;
+    const handleLikes = async () => {
+        if (isLiking) return;
+
         const nextLikedState = !hasLiked;
+
         try {
             setIsLiking(true);
             setHasLiked(nextLikedState);
@@ -35,199 +37,110 @@ export default function PostCard({post, dbUserId}:{post:Post, dbUserId?:string |
             await toggleLike(post.id);
         } catch (error) {
             setOptimisticLikes(post._count.likes);
-            setHasLiked(post.likes.some((like)=>like.userId === dbUserId));
+            setHasLiked(post.likes.some((like) => like.userId === dbUserId));
             console.log("Error liking post", error);
-        }finally{
+        } finally {
             setIsLiking(false);
         }
-    }
+    };
 
-    const handleAddComment = async()=>{
-        if(!newComment.trim() || isCommenting) return;
-        try {
-            setIsCommenting(true);
-            const result = await createComment(post.id,newComment);
-            if(result?.success){
-                toast.success("Comment posted successfully");
-                setNewComment("");
-            }
-        } catch (error) {
-            toast.error("Failed to add comment");
-        }finally{
-            setIsCommenting(false);
-        }
-    }
+    const handleDeletePost = async () => {
+        if (isDeleting) return;
 
-    const handleDeletePost = async()=>{
-        if(isDeleting) return;
         try {
             setIsDeleting(true);
             const result = await deletePost(post.id);
-            if(result?.success){
+
+            if (result?.success) {
                 toast.success("Post deleted successfully");
-            }else{
+            } else {
                 throw new Error(result?.error);
             }
         } catch (error) {
             toast.error("Failed to delete post");
-        }finally{
-            setIsDeleting(false)
+        } finally {
+            setIsDeleting(false);
         }
-    }
+    };
 
-  return (
-    <Card className='overflow-hidden'>
-        <CardContent className='p-4 sm:p-3'>
-            <div className='space-y-4'>
-                <div className='flex space-x-3 sm:space-x-4'>
-                    <Link href={`/profile/${post.author.username}`}>
-                        <Avatar className='size-8 sm:w-10 sm:h-10'>
-                            <AvatarImage src={post.author.image || "/avatar.png"}/>
-                        </Avatar>
-                    </Link>
-                    <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between'>
-                            {/* header */}
-                            <div className='flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate'>
-                                <Link 
-                                href={`/profile/${post.author.username}`}
-                                className='font-semibold truncate'
-                                >
-                                {post.author.name}  
-                                </Link>
-                                <div className='flex items-center space-x-2 text-sm text-accent-foreground'>
-                                    <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
-                                    <span>·</span>
-                                    <span>{formatDistanceToNow(post.createdAt)}</span>
+    return (
+        <Card className="overflow-hidden">
+            <CardContent className="p-4 sm:p-3">
+                <div className="space-y-4">
+                    <div className="flex space-x-3 sm:space-x-4">
+                        <Link href={`/profile/${post.author.username}`}>
+                            <Avatar className="size-8 sm:w-10 sm:h-10">
+                                <AvatarImage src={post.author.image || "/avatar.png"} />
+                            </Avatar>
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between">
+                                <div className="truncate sm:flex sm:flex-row sm:items-center sm:space-x-2">
+                                    <Link href={`/profile/${post.author.username}`} className="truncate font-semibold">
+                                        {post.author.name}
+                                    </Link>
+                                    <div className="flex items-center space-x-2 text-sm text-accent-foreground">
+                                        <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
+                                        <span>·</span>
+                                        <span>{formatDistanceToNow(post.createdAt)}</span>
+                                    </div>
                                 </div>
+
+                                {dbUserId === post.author.id ? (
+                                    <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                                ) : null}
                             </div>
-
-                            {/* check the current user is the post author */}
-                            {dbUserId === post.author.id && (
-                                <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
-                            )}
+                            <p className="mt-2 text-sm text-foreground wrap-break-word">{post.content}</p>
                         </div>
-                        <p className='mt-2 text-sm text-foreground wrap-break-word'>{post.content}</p>
                     </div>
-                </div>
-                {/* post image */}
-                {post.image && ( 
-                    <div className='rounded-lg overflow-hidden'>
-                        <img src={post.image} alt='post-image' className='w-auto h-auto object-cover' />
-                    </div>
-                )} 
 
-                {/* like and comment */}
-                <div className="flex items-center pt-2 space-x-4">
-                    {
-                        user ? (
-                            <Button 
-                            variant={"ghost"}
-                            size={'sm'}
-                            className={
-                                `text-muted-foreground gap-2 ${
-                                    hasLiked && " text-red-500 hover:text-red-600"
-                                }`
-                            }
-                            onClick={handleLikes}
+                    {post.image ? (
+                        <div className="overflow-hidden rounded-lg">
+                            <img src={post.image} alt="post-image" className="h-auto w-auto object-cover" />
+                        </div>
+                    ) : null}
+
+                    <div className="flex items-center space-x-4 pt-2">
+                        {user ? (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`gap-2 text-muted-foreground ${hasLiked ? "text-red-500 hover:text-red-600" : ""}`}
+                                onClick={handleLikes}
                             >
-                                {hasLiked ? (<HeartIcon className='size-5 fill-current'/>):(
-                                    <HeartIcon className='size-5'/>
-                                )
-                                }
+                                <HeartIcon className={`size-5 ${hasLiked ? "fill-current" : ""}`} />
                                 <span>{optimisticLikes}</span>
                             </Button>
-                        ):(
-                            <SignInButton mode='modal'>
-                                <Button variant={"ghost"} size={"sm"} className='text-muted-foreground gap-2'>
-                                    <HeartIcon className='size-5'/>
+                        ) : (
+                            <SignInButton mode="modal">
+                                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                                    <HeartIcon className="size-5" />
                                     <span>{optimisticLikes}</span>
                                 </Button>
                             </SignInButton>
                         )}
 
-                        <Button 
-                         variant={"ghost"}
-                         size={"sm"}
-                         className='text-muted-foreground gap-2 hover:text-blue-500'
-                         onClick={()=>setShowComments((prev)=>!prev)}
-                         >
-                            <MessageCircleIcon
-                            className={`size-5 ${showComments ? "fill-blue-500 text-blue-500":""}`}
-                            />
-                            <span>{post.comments.length}</span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2 text-muted-foreground hover:text-blue-500"
+                            onClick={() => setShowComments((prev) => !prev)}
+                        >
+                            <MessageCircleIcon className={`size-5 ${showComments ? "fill-blue-500 text-blue-500" : ""}`} />
+                            <span>{comments.length}</span>
                         </Button>
-                </div>
-                {showComments &&(
-                    <div className="space-y-4 pt-5 border-t">
-                        <div className="space-y-4">
-                            {/* display comment */}
-                            {
-                                post.comments.map((comment)=>(
-                                    <div key={comment.id} className='flex space-x-3'>
-                                        <Avatar>
-                                            <AvatarImage src={comment.author.image ?? "/avatar.png"}/>
-                                        </Avatar>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                <span className="font-medium text-sm">{comment.author.name}</span>
-                                                <span className="text-sm text-muted-foreground">
-                                                    @{comment.author.username}
-                                                </span>
-                                                <span className="text-sm text-muted-foreground">
-                                                    ·
-                                                </span>
-                                                <span className="text-sm text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(comment.createdAt))} ago
-                                                </span>
-                                            </div>
-                                            <p className='text-sm wrap-break-word'>{comment.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                        {
-                            user ?(
-                                <div className="flex space-x-3">
-                                    <Avatar className='size-8 shrink-0'>
-                                        <AvatarImage src={user?.imageUrl || "/avatar.png"}/>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                        <Textarea
-                                        placeholder='Write a comment...'
-                                        value={newComment}
-                                        onChange={(e)=>setNewComment(e.target.value)}
-                                        className='min-h-20 resize-none'
-                                        />
-                                        <div className="flex justify-end mt-2">
-                                            <Button
-                                            size="sm"
-                                            onClick={handleAddComment}
-                                            className='flex items-center gap-2'
-                                            disabled={!newComment.trim() || isCommenting}
-                                            >
-                                            {
-                                                isCommenting ? (
-                                                    "Posting..."
-                                                ):(
-                                                    <>
-                                                    <SendIcon className='size-4'/>
-                                                    Comment
-                                                    </>
-                                                )
-                                            }
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ):(
-                                <div>dssd</div>
-                            )
-                        }
                     </div>
-                )}
-            </div>
-        </CardContent>
-    </Card>
-  )
+
+                    {showComments ? (
+                        <CommentSection
+                            postId={post.id}
+                            comments={comments}
+                            setComments={setComments}
+                            dbUserId={dbUserId}
+                        />
+                    ) : null}
+                </div>
+            </CardContent>
+        </Card>
+    );
 }
