@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { ImageIcon, Loader2Icon, SendIcon } from 'lucide-react';
 import { createPost } from '@/actions/post.action';
 import { toast } from 'sonner';
+import EmojiPicker from './EmojiPicker';
 
 export default function CreatePost() {
   const {user} = useUser();
@@ -15,6 +16,10 @@ export default function CreatePost() {
   const [imageUrl, setImageUrl] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
+
+  const appendEmoji = (emoji: string) => {
+    setContent((prev) => `${prev}${emoji}`);
+  };
 
   const handleSubmit = async()=>{
     if(!content.trim()) return;
@@ -57,6 +62,7 @@ export default function CreatePost() {
 
           <div className='flex items-center justify-between border-t pt-4'>
             <div className='flex space-x-2'>
+              <EmojiPicker onSelect={appendEmoji} />
               <Button
               type='button'
               variant={"ghost"}

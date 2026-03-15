@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import EmojiPicker from "./EmojiPicker";
 
 type Posts = Awaited<ReturnType<typeof getPosts>>;
 type Comment = Posts[number]["comments"][number];
@@ -67,6 +68,9 @@ function CommentComposer({
     buttonLabel: string;
 }) {
     const { user } = useUser();
+    const appendEmoji = (emoji: string) => {
+        onChange(`${value}${emoji}`);
+    };
 
     if (!user) {
         return (
@@ -93,7 +97,9 @@ function CommentComposer({
                     onChange={(event) => onChange(event.target.value)}
                     className="min-h-20 w-full resize-none"
                 />
-                <div className="mt-2 flex justify-end">
+                <div className="mt-2 flex items-center justify-between">
+                    <EmojiPicker onSelect={appendEmoji} />
+                    <div className="flex items-center">
                     <Button
                         size="sm"
                         onClick={onSubmit}
@@ -109,6 +115,7 @@ function CommentComposer({
                             </>
                         )}
                     </Button>
+                    </div>
                 </div>
             </div>
         </div>
