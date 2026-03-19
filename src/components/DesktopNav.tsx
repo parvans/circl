@@ -3,8 +3,9 @@ import React from 'react'
 import ModeToggle from './ModeToggle';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { BellIcon, HomeIcon, UserIcon } from 'lucide-react';
+import { HomeIcon, UserIcon } from 'lucide-react';
 import { SignInButton, UserButton } from '@clerk/nextjs';
+import NotificationBell from './NotificationBell';
 
 export default async function DesktopNav() {
     const user = await currentUser();
@@ -24,12 +25,7 @@ export default async function DesktopNav() {
         {
             user ? (
                 <>
-                    <Button variant="ghost" className='flex items-center gap-2'  asChild>
-                        <Link href="/notifications">
-                            <BellIcon className='w-4 h-4'/>
-                            <span className='hidden lg:inline'>Notificatios</span>
-                        </Link>
-                    </Button>
+                    <NotificationBell label="Notifications" />
                     <Button variant="ghost" className='flex items-center gap-2'  asChild>
                         <Link href={`/profile/${
                             user.username ?? user.emailAddresses[0].emailAddress.split("@")[0]

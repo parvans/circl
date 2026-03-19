@@ -1,5 +1,6 @@
 "use client"
 import { getNotifications, markNotificationAsRead } from '@/actions/notification.action';
+import { useNotificationRealtime } from '@/components/NotificationRealtimeProvider';
 import NotificationSkeleton from '@/components/NotificationSkeleton'
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,16 +29,23 @@ const getNotificationIcon = (type:string)=>{
 const NotificationPage = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { refreshNotifications, setUnreadCount } = useNotificationRealtime();
 
     useEffect(()=>{
         const fetchNotifications = async()=>{
             setIsLoading(true);
             try {
                 const data = await getNotifications();
-                setNotifications(data);
+                const normalizedNotifications = data.map((notification)=>({
+                    ...notification,
+                    read:true,
+                }));
+                setNotifications(normalizedNotifications);
                 const unReadIds = data.filter(n => !n.read).map(n => n.id);
                 if(unReadIds.length > 0){
                     await markNotificationAsRead(unReadIds);
+                    setUnreadCount(0);
+                    await refreshNotifications();
                 }
 
             } catch (error) {
@@ -47,7 +55,10 @@ const NotificationPage = () => {
             }
         }
         fetchNotifications()
-    },[])
+        const interval = window.setInterval(fetchNotifications, 5000);
+
+        return () => window.clearInterval(interval);
+    },[refreshNotifications, setUnreadCount])
 
     if(isLoading) return <NotificationSkeleton/>
   return (

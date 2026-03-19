@@ -3,9 +3,10 @@ import React, { useState } from 'react'
 import { Button } from './ui/button'
 import { SignInButton, SignOutButton, useAuth } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
-import { BellIcon, HomeIcon, LogOutIcon, MenuIcon, MoonIcon, SunIcon, UserIcon } from 'lucide-react';
+import { HomeIcon, LogOutIcon, MenuIcon, MoonIcon, SunIcon, UserIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
+import NotificationBell from './NotificationBell';
 
 export default function MobileNav() {
   const [showMenu,setShowMenu] = useState(false);
@@ -45,12 +46,11 @@ export default function MobileNav() {
 
             {isSignedIn ? (
               <>
-                <Button variant={"ghost"} className='flex items-center gap-3 justify-start' asChild>
-                  <Link href={"/notifications"} >
-                    <BellIcon className='w-4 h-4'/>
-                    Notifications
-                  </Link>
-                </Button>
+                <NotificationBell
+                  label="Notifications"
+                  className='flex items-center gap-3 justify-start'
+                  showLabelOnMobile
+                />
 
                 <Button variant={"ghost"} className='flex items-center gap-3 justify-start' asChild>
                   <Link href={"/profile"} >

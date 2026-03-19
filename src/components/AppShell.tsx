@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 import { SearchUIProvider, useSearchUI } from "./SearchUIProvider";
+import { NotificationRealtimeProvider } from "./NotificationRealtimeProvider";
 
 type AppShellProps = {
   navbar: ReactNode;
@@ -42,10 +43,12 @@ function AppShellContent({ navbar, sidebar, children }: AppShellProps) {
 
 export default function AppShell({ navbar, sidebar, children }: AppShellProps) {
   return (
-    <SearchUIProvider>
-      <AppShellContent navbar={navbar} sidebar={sidebar}>
-        {children}
-      </AppShellContent>
-    </SearchUIProvider>
+    <NotificationRealtimeProvider>
+      <SearchUIProvider>
+        <AppShellContent navbar={navbar} sidebar={sidebar}>
+          {children}
+        </AppShellContent>
+      </SearchUIProvider>
+    </NotificationRealtimeProvider>
   );
 }

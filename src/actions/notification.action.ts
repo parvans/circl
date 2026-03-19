@@ -49,6 +49,52 @@ export const getNotifications = async()=>{
     }
 }
 
+export const getNotificationSummary = async()=>{
+    try {
+        const userId = await getDbUserId();
+        if(!userId){
+            return {
+                unreadCount: 0,
+                latestUnread: null,
+            };
+        }
+
+        const [unreadCount, latestUnread] = await Promise.all([
+            prisma.notifications.count({
+                where:{
+                    userId,
+                    read:false,
+                }
+            }),
+            prisma.notifications.findFirst({
+                where:{
+                    userId,
+                    read:false,
+                },
+                select:{
+                    id:true,
+                    type:true,
+                    createdAt:true,
+                },
+                orderBy:{
+                    createdAt:"desc"
+                }
+            })
+        ]);
+
+        return {
+            unreadCount,
+            latestUnread,
+        };
+    } catch (error) {
+        console.error("Error Fetching Notification Summary:", error);
+        return {
+            unreadCount: 0,
+            latestUnread: null,
+        };
+    }
+}
+
 export const markNotificationAsRead = async(notificationIds: string[])=>{
     try {
         await prisma.notifications.updateMany({
