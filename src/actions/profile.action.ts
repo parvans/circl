@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { getDbUserId } from "./user.action";
 
 export const getProfileByUser = async(username:string)=>{
     try {
@@ -59,6 +60,11 @@ export const getUserPosts = async(userId:string)=>{
                                 username:true,
                                 image:true,
                             }
+                        },
+                        likes:{
+                            select:{
+                                userId:true,
+                            }
                         }
                     },
                     orderBy:{createdAt:"asc"}
@@ -88,7 +94,7 @@ export const getUserPosts = async(userId:string)=>{
 
 export const getUserLikedPosts = async(userId:string)=>{
     try {
-       const likedPosts = prisma.posts.findMany({
+       const likedPosts = await prisma.posts.findMany({
         where:{
             likes:{
                 some:{
@@ -114,6 +120,11 @@ export const getUserLikedPosts = async(userId:string)=>{
                             username:true,
                             image:true,
                         },
+                    },
+                    likes:{
+                        select:{
+                            userId:true,
+                        }
                     },
                 },
                 orderBy:{createdAt:"asc"}
@@ -159,10 +170,31 @@ export const updateUserProfile = async(formData:FormData)=>{
             }
         });
 
-        revalidatePath("/profile");
+        revalidatePath(`/profile/${updateUser.username}`);
         return { success: true, updateUser}
     } catch (error) {
         console.error("Error update profile : ", error);
         throw new Error("Failed update profile");
+    }
+}
+
+export const isFollowing = async(userId:string)=>{
+    try {
+        const currentUserId = await getDbUserId();
+        if(!currentUserId) return false;
+        
+        const follow = await prisma.follows.findUnique({
+            where:{
+                followerId_followingId:{
+                    followerId:currentUserId,
+                    followingId:userId
+                }
+            }
+        });
+         
+        return !! follow;
+    } catch (error) {
+        console.error("Error checking follow status : ", error);
+        throw new Error("Failed checking follow status");
     }
 }
