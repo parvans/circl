@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 import { SearchUIProvider, useSearchUI } from "./SearchUIProvider";
 import { NotificationRealtimeProvider } from "./NotificationRealtimeProvider";
@@ -12,10 +12,13 @@ type AppShellProps = {
 };
 
 function AppShellContent({ navbar, sidebar, children }: AppShellProps) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isSearchFocused } = useSearchUI();
   const query = searchParams.get("q")?.trim() ?? "";
   const isSearchActive = query.length > 0;
+  const isProfilePage = pathname.startsWith("/profile/");
+  const shouldHideSidebar = isSearchActive || isProfilePage;
 
   return (
     <div className="min-h-screen">
@@ -26,12 +29,12 @@ function AppShellContent({ navbar, sidebar, children }: AppShellProps) {
         ) : null}
         <div className="relative z-40 max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {!isSearchActive ? (
+            {!shouldHideSidebar ? (
               <div className="hidden lg:block lg:col-span-3">
                 {sidebar}
               </div>
             ) : null}
-            <div className={isSearchActive ? "lg:col-span-12" : "lg:col-span-9"}>
+            <div className={shouldHideSidebar ? "lg:col-span-12" : "lg:col-span-9"}>
               {children}
             </div>
           </div>
