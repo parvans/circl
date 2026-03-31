@@ -1,16 +1,20 @@
 "use client"
 import React, { useState } from 'react'
 import { Button } from './ui/button'
-import { SignInButton, SignOutButton, useAuth } from '@clerk/nextjs';
+import { SignInButton, SignOutButton } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
 import { HomeIcon, LogOutIcon, MenuIcon, MoonIcon, SunIcon, UserIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
 import NotificationBell from './NotificationBell';
 
-export default function MobileNav() {
+type MobileNavProps = {
+  isSignedIn: boolean;
+  profileHref?: string;
+}
+
+export default function MobileNav({ isSignedIn, profileHref }: MobileNavProps) {
   const [showMenu,setShowMenu] = useState(false);
-  const {isSignedIn} = useAuth();
   const {theme,setTheme} = useTheme();
   return (
     <div className='flex md:hidden items-center space-x-2'>
@@ -38,7 +42,7 @@ export default function MobileNav() {
 
           <nav className='flex flex-col space-y-4 mt-6'>
             <Button variant={"ghost"} className='flex items-center gap-3 justify-start' asChild>
-              <Link href={"/"} >
+              <Link href={"/"} onClick={() => setShowMenu(false)}>
                 <HomeIcon className='w-4 h-4'/>
                 Home
               </Link>
@@ -53,7 +57,7 @@ export default function MobileNav() {
                 />
 
                 <Button variant={"ghost"} className='flex items-center gap-3 justify-start' asChild>
-                  <Link href={"/profile"} >
+                  <Link href={profileHref ?? "/"} onClick={() => setShowMenu(false)}>
                     <UserIcon className='w-4 h-4'/>
                     Profile
                   </Link>

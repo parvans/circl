@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import AppShell from "@/components/AppShell";
+import { getCurrentDbUser } from "@/actions/user.action";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +24,13 @@ export const metadata: Metadata = {
   description: "Let's live together",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const currentDbUser = await getCurrentDbUser();
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
@@ -40,7 +43,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AppShell navbar={<Navbar />} sidebar={<Sidebar />}>
+            <AppShell navbar={<Navbar user={currentDbUser} />} sidebar={<Sidebar user={currentDbUser} />}>
               {children}
             </AppShell>
           </ThemeProvider>

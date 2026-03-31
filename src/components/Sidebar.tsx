@@ -1,33 +1,28 @@
-import { currentUser } from '@clerk/nextjs/server'
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { SignInButton } from '@clerk/nextjs';
 import { Button } from './ui/button';
-import { getUserByClerkId } from '@/actions/user.action';
+import { getCurrentDbUser } from '@/actions/user.action';
 import Link from 'next/link';
 import { Avatar, AvatarImage } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { LinkIcon, MapPinIcon } from 'lucide-react';
 
 
-export default async function Sidebar() {
-    const authUser = await currentUser();
-    if(!authUser) return <SignupSigninSidebar/>;
+type SidebarProps = {
+    user: Awaited<ReturnType<typeof getCurrentDbUser>>;
+}
 
-    const user = await getUserByClerkId(authUser.id);
-    if(!user) return null;
+export default function Sidebar({ user }: SidebarProps) {
+    if(!user) return <SignupSigninSidebar/>;
 
-    //console.log(user);
-    
   return (
     <div className='sticky top-20'>
       <Card>
         <CardContent className='pt-6'>
             <div className='flex flex-col items-center text-center'>
                 <Link 
-                    href={`/profile/
-                        ${authUser.username ?? authUser.emailAddresses[0].emailAddress.split("@")[0]}`
-                    }
+                    href={`/profile/${user.username}`}
                     className='flex flex-col items-center justify-center'
                     >
                     <Avatar className='w-20 h-20 border-2'>
@@ -111,6 +106,5 @@ const SignupSigninSidebar=()=>{
         </div>
     )
 }
-
 
 

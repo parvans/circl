@@ -2,15 +2,16 @@ import Link from 'next/link'
 import React from 'react'
 import DesktopNav from './DesktopNav'
 import MobileNav from './MobileNav'
-import { currentUser } from '@clerk/nextjs/server'
-import { syncUser } from '@/actions/user.action'
+import { getCurrentDbUser } from '@/actions/user.action'
 import SearchBar from './SearchBar'
 
-export default async function Navbar() {
-    const user = await currentUser();
-    if(user){
-        await syncUser(); 
-    }
+type NavbarProps = {
+    user: Awaited<ReturnType<typeof getCurrentDbUser>>;
+}
+
+export default function Navbar({ user }: NavbarProps) {
+    const profileHref = user ? `/profile/${user.username}` : undefined;
+
   return (
     <nav className='sticky top-0 w-full border-b bg-background/95 backdrop-blur 
     supports-backdrop-filter:bg-background/60 z-60'>
@@ -25,8 +26,8 @@ export default async function Navbar() {
                 <div className="flex-1 max-w-md mx-4">
                    <SearchBar />
                 </div>
-                <DesktopNav/>
-                <MobileNav/>
+                <DesktopNav isSignedIn={!!user} profileHref={profileHref} />
+                <MobileNav isSignedIn={!!user} profileHref={profileHref} />
             </div>
         </div>
     </nav>

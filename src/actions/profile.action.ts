@@ -3,9 +3,10 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { getDbUserId } from "./user.action";
+import { getCurrentDbUser } from "./user.action";
+import { cache } from "react";
 
-export const getProfileByUser = async(username:string)=>{
+export const getProfileByUser = cache(async(username:string)=>{
     try {
         const user = await prisma.user.findUnique({
             where:{
@@ -36,7 +37,7 @@ export const getProfileByUser = async(username:string)=>{
         console.error("Error fetching profile : ", error);
         throw new Error("Failed to fetch profile");
     }
-}
+})
 
 export const getUserPosts = async(userId:string)=>{
     try {
@@ -180,13 +181,13 @@ export const updateUserProfile = async(formData:FormData)=>{
 
 export const isFollowing = async(userId:string)=>{
     try {
-        const currentUserId = await getDbUserId();
-        if(!currentUserId) return false;
+        const currentUser = await getCurrentDbUser();
+        if(!currentUser) return false;
         
         const follow = await prisma.follows.findUnique({
             where:{
                 followerId_followingId:{
-                    followerId:currentUserId,
+                    followerId:currentUser.id,
                     followingId:userId
                 }
             }

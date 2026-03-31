@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageCircleIcon, UserPlusIcon } from 'lucide-react';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner';
 
 type Notifications = Awaited<ReturnType<typeof getNotifications>>
@@ -29,11 +29,19 @@ const getNotificationIcon = (type:string)=>{
 const NotificationPage = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { refreshNotifications, setUnreadCount } = useNotificationRealtime();
+    const isFetchingRef = useRef(false);
+    const { setUnreadCount } = useNotificationRealtime();
 
     useEffect(()=>{
-        const fetchNotifications = async()=>{
-            setIsLoading(true);
+        const fetchNotifications = async(showLoading = false)=>{
+            if(isFetchingRef.current) return;
+
+            isFetchingRef.current = true;
+
+            if(showLoading){
+                setIsLoading(true);
+            }
+
             try {
                 const data = await getNotifications();
                 const normalizedNotifications = data.map((notification)=>({
@@ -45,20 +53,25 @@ const NotificationPage = () => {
                 if(unReadIds.length > 0){
                     await markNotificationAsRead(unReadIds);
                     setUnreadCount(0);
-                    await refreshNotifications();
                 }
 
             } catch (error) {
                 toast.error("Failed to fetch notifications")
             }finally{
-                setIsLoading(false)
+                if(showLoading){
+                    setIsLoading(false)
+                }
+                isFetchingRef.current = false;
             }
         }
-        fetchNotifications()
-        const interval = window.setInterval(fetchNotifications, 5000);
+        void fetchNotifications(true)
+        const interval = window.setInterval(() => {
+            if(document.visibilityState !== "visible") return;
+            void fetchNotifications();
+        }, 5000);
 
         return () => window.clearInterval(interval);
-    },[refreshNotifications, setUnreadCount])
+    },[setUnreadCount])
 
     if(isLoading) return <NotificationSkeleton/>
   return (

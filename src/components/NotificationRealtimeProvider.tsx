@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { getNotificationSummary } from "@/actions/notification.action";
+import { usePathname } from "next/navigation";
 
 type NotificationType = "FOLLOW" | "COMMENT" | "LIKE";
 
@@ -67,53 +68,67 @@ function playNotificationTone(type: NotificationType) {
 
 export function NotificationRealtimeProvider({ children }: { children: ReactNode }) {
   const { isSignedIn } = useAuth();
+  const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const isRefreshingRef = useRef(false);
   const previousSummaryRef = useRef<NotificationSummary | null>(null);
 
   const refreshNotifications = useCallback(async () => {
+    if (isRefreshingRef.current) return;
+
+    isRefreshingRef.current = true;
+
     if (!isSignedIn) {
       setUnreadCount(0);
       previousSummaryRef.current = null;
+      isRefreshingRef.current = false;
       return;
     }
 
-    const summary = await getNotificationSummary();
-    const previousSummary = previousSummaryRef.current;
+    try {
+      const summary = await getNotificationSummary();
+      const previousSummary = previousSummaryRef.current;
 
-    setUnreadCount(summary.unreadCount);
+      setUnreadCount(summary.unreadCount);
 
-    if (
-      previousSummary &&
-      summary.latestUnread &&
-      summary.latestUnread.id !== previousSummary.latestUnread?.id &&
-      summary.unreadCount > previousSummary.unreadCount
-    ) {
-      playNotificationTone(summary.latestUnread.type as NotificationType);
+      if (
+        previousSummary &&
+        summary.latestUnread &&
+        summary.latestUnread.id !== previousSummary.latestUnread?.id &&
+        summary.unreadCount > previousSummary.unreadCount
+      ) {
+        playNotificationTone(summary.latestUnread.type as NotificationType);
+      }
+
+      previousSummaryRef.current = summary;
+    } finally {
+      isRefreshingRef.current = false;
     }
-
-    previousSummaryRef.current = summary;
   }, [isSignedIn]);
 
   useEffect(() => {
     void refreshNotifications();
 
-    if (!isSignedIn) return;
+    if (!isSignedIn || pathname === "/notifications") return;
 
-    const interval = window.setInterval(() => {
-      void refreshNotifications();
-    }, 5000);
-
-    const handleFocus = () => {
+    const pollNotifications = () => {
+      if (document.visibilityState !== "visible") return;
       void refreshNotifications();
     };
 
-    window.addEventListener("focus", handleFocus);
+    const interval = window.setInterval(() => {
+      pollNotifications();
+    }, 5000);
+
+    window.addEventListener("focus", pollNotifications);
+    document.addEventListener("visibilitychange", pollNotifications);
 
     return () => {
       window.clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("focus", pollNotifications);
+      document.removeEventListener("visibilitychange", pollNotifications);
     };
-  }, [isSignedIn, refreshNotifications]);
+  }, [isSignedIn, pathname, refreshNotifications]);
 
   return (
     <NotificationRealtimeContext.Provider

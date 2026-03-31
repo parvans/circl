@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
@@ -264,7 +264,7 @@ function CommentItem({
 export default function CommentSection({ postId, comments, setComments, dbUserId }: CommentSectionProps) {
     const [newComment, setNewComment] = useState("");
     const [isCommenting, setIsCommenting] = useState(false);
-    const threadedComments = buildCommentTree(comments);
+    const threadedComments = useMemo(() => buildCommentTree(comments), [comments]);
 
     const handleAddComment = async (content: string, parentId?: string) => {
         const trimmedContent = content.trim();

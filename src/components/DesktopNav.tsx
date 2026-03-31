@@ -1,4 +1,3 @@
-import { currentUser } from '@clerk/nextjs/server'
 import React from 'react'
 import ModeToggle from './ModeToggle';
 import { Button } from './ui/button';
@@ -7,10 +6,12 @@ import { HomeIcon, UserIcon } from 'lucide-react';
 import { SignInButton, UserButton } from '@clerk/nextjs';
 import NotificationBell from './NotificationBell';
 
-export default async function DesktopNav() {
-    const user = await currentUser();
-    //console.log("User is here : ", user);
-    
+type DesktopNavProps = {
+    isSignedIn: boolean;
+    profileHref?: string;
+}
+
+export default function DesktopNav({ isSignedIn, profileHref }: DesktopNavProps) {
   return (
     <div className='hidden md:flex items-center space-x-4'>
         <ModeToggle />
@@ -23,13 +24,11 @@ export default async function DesktopNav() {
         </Button>
 
         {
-            user ? (
+            isSignedIn ? (
                 <>
                     <NotificationBell label="Notifications" />
                     <Button variant="ghost" className='flex items-center gap-2'  asChild>
-                        <Link href={`/profile/${
-                            user.username ?? user.emailAddresses[0].emailAddress.split("@")[0]
-                        }`}>
+                        <Link href={profileHref ?? "/"}>
                             <UserIcon className='w-4 h-4'/>
                             <span className='hidden lg:inline'>Profile</span>
                         </Link>
