@@ -1,5 +1,6 @@
 "use server";
 
+import { createCloudinarySignature, getCloudinaryUploadConfig } from "@/lib/cloudinary";
 import prisma from "@/lib/prisma";
 import { getDbUserId } from "./user.action";
 import { revalidatePath } from "next/cache";
@@ -20,15 +21,38 @@ const commentInclude = {
     },
 };
 
+export type PostImageUploadSignatureResult =
+    | {
+          success: true;
+          apiKey: string;
+          cloudName: string;
+          folder: string;
+          signature: string;
+          timestamp: number;
+      }
+    | {
+          success: false;
+          error: string;
+      };
+
 export const createPost = async (content: string, imageUrl: string) => {
     try {
         const userId = await getDbUserId();
-        if (!userId) return;
+        if (!userId) {
+            return { success: false, error: "You need to sign in to post." };
+        }
+
+        const trimmedContent = content.trim();
+        const normalizedImageUrl = imageUrl.trim();
+
+        if (!trimmedContent && !normalizedImageUrl) {
+            return { success: false, error: "Add some text or an image to post." };
+        }
 
         const post = await prisma.posts.create({
             data: {
-                content,
-                image: imageUrl,
+                content: trimmedContent || null,
+                image: normalizedImageUrl || null,
                 authorId: userId,
             },
         });
@@ -38,6 +62,31 @@ export const createPost = async (content: string, imageUrl: string) => {
     } catch (error) {
         console.log("Error creating post", error);
         return { success: false, error: "Failed to create post" };
+    }
+};
+
+export const getPostImageUploadSignature = async (): Promise<PostImageUploadSignatureResult> => {
+    try {
+        const userId = await getDbUserId();
+        if (!userId) {
+            return { success: false, error: "You need to sign in to upload an image." };
+        }
+
+        const timestamp = Math.floor(Date.now() / 1000);
+        const { apiKey, cloudName, folder } = getCloudinaryUploadConfig();
+        const signature = createCloudinarySignature({ folder, timestamp });
+
+        return {
+            success: true,
+            apiKey,
+            cloudName,
+            folder,
+            signature,
+            timestamp,
+        };
+    } catch (error) {
+        console.log("Error preparing Cloudinary upload", error);
+        return { success: false, error: "Cloudinary image uploads are not configured yet." };
     }
 };
 

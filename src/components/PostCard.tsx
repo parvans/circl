@@ -96,7 +96,7 @@ export default function PostCard({ post, dbUserId }: { post: Post; dbUserId?: st
 
                     {post.image ? (
                         <div className="overflow-hidden rounded-lg">
-                            <img src={post.image} alt="post-image" className="h-auto w-auto object-cover" />
+                            <img src={post.image} alt="post-image" className="max-h-[32rem] w-full bg-muted/20 object-contain" />
                         </div>
                     ) : null}
 
