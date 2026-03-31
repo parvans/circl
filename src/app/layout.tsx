@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   description: "Let's live together",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{

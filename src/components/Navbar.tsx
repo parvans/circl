@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import React from 'react'
+import React, { Suspense } from 'react'
 import DesktopNav from './DesktopNav'
 import MobileNav from './MobileNav'
 import { getCurrentDbUser } from '@/actions/user.action'
@@ -24,7 +24,9 @@ export default function Navbar({ user }: NavbarProps) {
                 </div>
                 {/* searchbar */}
                 <div className="flex-1 max-w-md mx-4">
-                   <SearchBar />
+                   <Suspense fallback={<div className="h-10 w-full rounded-xl border bg-background/70" aria-hidden="true" />}>
+                     <SearchBar />
+                   </Suspense>
                 </div>
                 <DesktopNav isSignedIn={!!user} profileHref={profileHref} />
                 <MobileNav isSignedIn={!!user} profileHref={profileHref} />
