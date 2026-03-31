@@ -52,6 +52,10 @@ function toggleCommentLikeState(comments: Comment[], commentId: string, userId: 
     });
 }
 
+function countReplies(comment: ThreadComment): number {
+    return comment.replies.reduce((total, reply) => total + 1 + countReplies(reply), 0);
+}
+
 function CommentComposer({
     value,
     onChange,
@@ -138,9 +142,11 @@ function CommentItem({
     const { user } = useUser();
     const [reply, setReply] = useState("");
     const [showReplyBox, setShowReplyBox] = useState(false);
+    const [showReplies, setShowReplies] = useState(depth > 0);
     const [isReplying, setIsReplying] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const hasLiked = comment.likes.some((like) => like.userId === dbUserId);
+    const replyCount = countReplies(comment);
 
     const handleReply = async () => {
         if (!reply.trim() || isReplying) return;
@@ -152,6 +158,7 @@ function CommentItem({
             if (success) {
                 setReply("");
                 setShowReplyBox(false);
+                setShowReplies(true);
             }
         } finally {
             setIsReplying(false);
@@ -226,6 +233,19 @@ function CommentItem({
                             <MessageCircleMoreIcon className="size-4" />
                             <span>Reply</span>
                         </Button>
+
+                        {depth === 0 && replyCount > 0 ? (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="px-2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowReplies((prev) => !prev)}
+                            >
+                                {showReplies
+                                    ? "Hide replies"
+                                    : `Show ${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
+                            </Button>
+                        ) : null}
                     </div>
 
                     {showReplyBox ? (
@@ -241,7 +261,7 @@ function CommentItem({
                         </div>
                     ) : null}
 
-                    {comment.replies.length > 0 ? (
+                    {showReplies && comment.replies.length > 0 ? (
                         <div className="mt-4 space-y-4">
                             {comment.replies.map((replyComment) => (
                                 <CommentItem
