@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Circl
 
-## Getting Started
+Circl is a social app built with Next.js, Clerk, Prisma, PostgreSQL, and Cloudinary.
+Users can create posts, upload images, like posts, comment with nested replies, follow other users, and receive notifications.
 
-First, run the development server:
+Live URL: [https://circl-five.vercel.app](https://circl-five.vercel.app)
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Clerk authentication
+- Prisma
+- PostgreSQL
+- Cloudinary
+
+## Features
+
+- Authentication with Clerk
+- Create text and image posts
+- Like posts and comments
+- Nested comment replies
+- Follow other users
+- Real-time notification polling
+- Profile pages with posts and liked posts
+- Search for users and posts
+- Dark mode support
+
+## Prerequisites
+
+Before running the project locally, make sure you have:
+
+- Node.js 20 or newer
+- npm
+- A PostgreSQL database
+- A Clerk app
+- A Cloudinary account
+
+## Environment Variables
+
+Create a `.env` file in the project root and add:
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+DATABASE_URL=
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_UPLOAD_FOLDER=circl/posts
+```
+
+Notes:
+
+- `DATABASE_URL` should point to your PostgreSQL database.
+- `CLOUDINARY_UPLOAD_FOLDER` is optional. The default used by the app is `circl/posts`.
+
+## Local Setup
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Add your environment variables to `.env`.
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000).
+
+## Available Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run start
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Production Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To test a production build locally:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+The app is deployed on Vercel:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Production URL: [https://circl-five.vercel.app](https://circl-five.vercel.app)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+src/
+  app/           App Router pages and layouts
+  actions/       Server actions
+  components/    UI and feature components
+  lib/           Shared utilities and helpers
+prisma/          Prisma schema and config
+public/          Static assets
+```
